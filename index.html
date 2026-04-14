@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Дефектный акт</title>
+    <style>
+        /* Ваши стили из n8n (сокращённо, но можно взять полностью) */
+        :root {
+            --font-family: "Open Sans", sans-serif;
+            --color-background: #fbfcfe;
+            --color-card-bg: #ffffff;
+            --color-card-border: #dbdfe7;
+            --color-label: #555555;
+            --color-input-border: #dbdfe7;
+            --color-submit-btn-bg: #ff6d5a;
+            --color-submit-btn-text: #ffffff;
+            --border-radius-card: 8px;
+            --border-radius-input: 6px;
+            --padding-card: 24px;
+            --padding-form-input: 12px;
+            --container-width: 448px;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: var(--font-family);
+            background-color: var(--color-background);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            width: var(--container-width);
+            max-width: 100%;
+        }
+        .card {
+            background-color: var(--color-card-bg);
+            border: 1px solid var(--color-card-border);
+            border-radius: var(--border-radius-card);
+            padding: var(--padding-card);
+            box-shadow: 0 4px 16px rgba(99, 77, 255, 0.06);
+        }
+        h2 {
+            text-align: center;
+            margin-bottom: 24px;
+            color: #525356;
+            font-weight: 400;
+        }
+        .form-group {
+            margin-bottom: 16px;
+        }
+        label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--color-label);
+            margin-bottom: 6px;
+        }
+        input, textarea {
+            width: 100%;
+            padding: var(--padding-form-input);
+            border: 1px solid var(--color-input-border);
+            border-radius: var(--border-radius-input);
+            font-size: 14px;
+            font-family: var(--font-family);
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: var(--color-submit-btn-bg);
+            color: var(--color-submit-btn-text);
+            border: none;
+            border-radius: var(--border-radius-input);
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 8px;
+        }
+        button:active { opacity: 0.8; }
+        .status {
+            text-align: center;
+            margin-top: 16px;
+            font-size: 14px;
+            color: #2c3e50;
+        }
+    </style>
+    <script src="https://vk.com/js/api/openapi.js?169"></script>
+</head>
+<body>
+<div class="container">
+    <div class="card">
+        <h2>📋 Дефектный акт</h2>
+        <form id="defectForm">
+            <div class="form-group">
+                <label>📅 Дата составления акта</label>
+                <input type="date" name="дата" required>
+            </div>
+            <div class="form-group">
+                <label>👤 Заказчик</label>
+                <input type="text" name="заказчик" required>
+            </div>
+            <div class="form-group">
+                <label>📍 Адрес демонтажа/монтажа</label>
+                <input type="text" name="адрес" required>
+            </div>
+            <div class="form-group">
+                <label>❌ Описание неисправности</label>
+                <textarea name="описание" rows="3" required></textarea>
+            </div>
+            <div class="form-group">
+                <label>⚙️ Оборудование / Заводской номер блока</label>
+                <input type="text" name="оборудование" required>
+            </div>
+            <div class="form-group">
+                <label>📝 Заключение</label>
+                <textarea name="заключение" rows="3" required></textarea>
+            </div>
+            <div class="form-group">
+                <label>👔 Заказчик работ</label>
+                <input type="text" name="заказчикРабот" required>
+            </div>
+            <div class="form-group">
+                <label>🛠 Исполнитель работ</label>
+                <input type="text" name="исполнитель" required>
+            </div>
+            <button type="submit">✅ Отправить акт</button>
+        </form>
+        <div id="status" class="status"></div>
+    </div>
+</div>
+
+<script>
+    // Инициализация VK Mini App (укажите свой APP_ID)
+    VK.init({ apiId: 54540393 });  // <--- ЗАМЕНИТЕ НА ВАШ APP_ID
+
+    const form = document.getElementById('defectForm');
+    const statusDiv = document.getElementById('status');
+
+    // Получаем параметры запуска приложения
+    const urlParams = new URLSearchParams(window.location.search);
+    const userId = urlParams.get('vk_user_id');
+    const hash = urlParams.get('vk_platform_start_app_hash');
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        statusDiv.textContent = 'Отправка...';
+        const formData = new FormData(form);
+        const data = Object.fromEntries(formData.entries());
+
+        // Добавляем ID пользователя и hash
+        data.userId = userId;
+        data.hash = hash;
+
+        try {
+            // <--- ВСТАВЬТЕ ВАШ URL ВЕБХУКА В N8N
+            const response = await fetch('https://ВАШ-N8N.ru/webhook/ВАШ-ПУТЬ', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            const result = await response.json();
+            statusDiv.textContent = '✅ Акт успешно отправлен!';
+            setTimeout(() => VKWebApp.close(), 1500);
+        } catch (error) {
+            statusDiv.textContent = '❌ Ошибка при отправке. Попробуйте еще раз.';
+            console.error(error);
+        }
+    });
+</script>
+</body>
+</html>
